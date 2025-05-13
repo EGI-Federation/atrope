@@ -27,6 +27,7 @@ from oslo_log import log
 import requests
 import requests.certs
 import six
+import oras.provider
 
 from atrope import exception
 from atrope import ovf
@@ -155,7 +156,7 @@ class BaseImage(object):
                     subprocess.run(cmd, capture_output=True, check=True)
                 except subprocess.CalledProcessError as e:
                     LOG.error("Could not convert image: %s", e)
-                    raise exception.ImageConversionerror(
+                    raise exception.ImageConversionError(
                         code=e.returncode, reason=e.stderr
                     )
         else:
@@ -287,3 +288,139 @@ class HepixImage(BaseImage):
 
         self.location = location
         self.locations = [location]
+
+
+class HarborImage(BaseImage):
+    """Represents an image fetched via Harbor API, downloaded via oras."""
+
+    def __init__(self, image_ref, registry_host, username, password, annotations, list_name, digest):
+        """
+        Initialize HarborImage.
+
+        :param image_ref: Full image reference (e.g., registry/repo:tag) from API
+        :param annotations: Parsed OCI annotations dictionary from API response.
+        :param list_name: Name of the source list this image belongs to.
+        :param digest: SHA256 identifier of the image.
+        """
+        super(HarborImage, self).__init__(annotations)
+
+        self.image_ref = image_ref
+        self.registry_host = registry_host
+        self.registry_username = username
+        self.registry_pwd = password
+        self.list_name = list_name
+        self.annotations = annotations if annotations else {}
+        self.digest = digest  # SHA256 identifier of the image
+
+        self.identifier = f"{registry_host}/{image_ref}-{digest}"
+
+        self.format = self.annotations.get("org.openstack.glance.disk_format", "raw")
+        self.container_format = self.annotations.get("org.openstack.glance.container_format", "bare")
+
+        self.sha512 = None
+
+        self.revision = self.annotations.get("org.opencontainers.image.revision")
+        self.source_url = self.annotations.get("org.opencontainers.image.source")
+        self.appliance_attributes = self.annotations
+
+        self.uri = image_ref
+        self.location = None
+        self.locations = []
+        self.verified = True
+        self.expired = False
+
+        # For glance dispatcher TODO(lukas-moder): Clean up the attributes of HarborImage
+        self.title = image_ref
+        self.arch = "x86_64" #TODO(lukas-moder): Where to get this in Harbor
+        self.osname = "Alpine"
+        self.osversion = "3.21.3"
+        self.description = "Test description for Demo"
+        self.mpuri = self.uri
+        LOG.debug(f"HarborImage initialized: {self.identifier}, format={self.format}")
+
+    def _run_oras_pull(self, location: str):
+        """Helper specifically for running oras pull command."""
+        try:
+            registry = oras.provider.Registry(self.registry_host, insecure=True, tls_verify=False, auth_backend="basic")
+            registry.login(username=self.registry_username, password=self.registry_pwd)
+            result_pull = registry.pull(target=self.image_ref, outdir=location)
+        except FileNotFoundError:
+            raise exception.AtropeException(message="oras command not found. Please ensure oras CLI is installed and in PATH.")
+        except subprocess.CalledProcessError as e:
+            raise exception.ImageDownloadFailed(code=e.returncode, reason=f"oras pull failed for {self.image_ref}: {e.stderr}")
+        except Exception as e:
+            raise exception.AtropeException(message=f"An unexpected error occurred running oras pull for {self.image_ref}: {e}")
+
+    def download(self, basedir):
+        """Download the image using oras pull."""
+        if self.expired:
+            raise exception.ImageExpired(reason="Image marked as expired")
+
+        if self.location and os.path.exists(self.location):
+            try:
+                self.verify_checksum()
+                LOG.info(f"Image {self.identifier} already downloaded and verified at {self.location}")
+                raise exception.ImageAlreadyDownloaded(location=self.location)
+            except exception.ImageVerificationFailed:
+                LOG.warning(f"Cached image {self.identifier} failed verification. Re-downloading.")
+                utils.rm(self.location)
+                self.location = None; self.locations = []; self.verified = False; self.sha512 = None
+
+        with tempfile.TemporaryDirectory(suffix=f"-{self.list_name}") as tmpdir:
+            LOG.info(f"Downloading Harbor image {self.identifier} ({self.image_ref}) using oras to {tmpdir}")
+            try:
+                self._run_oras_pull(tmpdir)
+            except exception.ImageDownloadFailed as e:
+                LOG.error(f"Failed to download {self.identifier} using oras: {e}")
+                raise
+
+            pulled_files = os.listdir(tmpdir)
+            if not pulled_files:
+                raise exception.ImageDownloadFailed(code=1, reason=f"oras pull to {tmpdir} resulted in no files for {self.identifier}.")
+            image_filename = max(pulled_files, key=lambda f: os.path.getsize(os.path.join(tmpdir, f)) if os.path.isfile(os.path.join(tmpdir, f)) else -1)
+            if not image_filename or not os.path.isfile(os.path.join(tmpdir, image_filename)):
+                raise exception.ImageDownloadFailed(code=1, reason=f"Could not identify main image file in oras pull output for {self.identifier} in {tmpdir}")
+
+            pulled_image_path = os.path.join(tmpdir, image_filename)
+            LOG.debug(f"Identified pulled image file: {pulled_image_path}")
+
+            safe_filename = "".join(c if c.isalnum() or c in ('-', '_', '.') else '_' for c in self.identifier.replace('/', '_').replace(':', '_'))
+            final_location = os.path.join(basedir, safe_filename)
+            utils.makedirs(basedir)
+
+            try:
+                os.rename(pulled_image_path, final_location)
+                self.location = final_location
+                self.locations = [final_location]
+                LOG.info(f"Stored Harbor image {self.identifier} at {self.location}")
+            except OSError as e:
+                raise exception.AtropeException(f"Failed to move downloaded file to cache for {self.identifier}: {e}")
+
+        try:
+            checksum_obj = utils.get_file_checksum(self.location)
+            self.sha512 = checksum_obj.hexdigest()
+            LOG.info(f"Calculated SHA512 for {self.identifier}: {self.sha512}")
+            self.verify_checksum()
+        except FileNotFoundError:
+            raise exception.ImageNotFoundOnDisk(location=self.location)
+        except exception.ImageVerificationFailed as e:
+            LOG.error(f"Immediate verification failed for {self.identifier}: {e}")
+            utils.rm(self.location)  # Clean up failed download
+            self.location = None
+            self.locations = []
+            self.verified = False
+            self.sha512 = None
+            raise
+        except Exception as e:
+            LOG.error(f"Failed to calculate or verify checksum for {self.identifier}: {e}")
+            utils.rm(self.location)  # Clean up failed download
+            self.location = None
+            self.locations = []
+            self.verified = False
+            self.sha512 = None
+            raise exception.ImageVerificationFailed(id=self.identifier, expected="N/A", obtained=f"Error during checksum: {e}")
+
+    def verify_checksum(self, location=None):
+        """Verify the image's calculated SHA512 checksum."""
+        # TODO check Harbor digest and verify based on it
+        pass
