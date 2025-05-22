@@ -1,7 +1,7 @@
 #checkov:skip=CKV_DOCKER_2: no need for a HEALTHCHECK
 FROM python:3.11-slim AS build
 
-# hadolint disable=DL3008
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
                 build-essential gcc git \
@@ -26,8 +26,7 @@ FROM python:3.11-slim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# hadolint disable=DL3015
-# hadolint disable=DL3008
+# hadolint ignore=DL3015,DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
                 curl gnupg2 qemu-utils vim \
