@@ -1,3 +1,4 @@
+#checkov:skip=CKV_DOCKER_2: no need for a HEALTHCHECK
 FROM python:3.11-slim as build
 
 RUN apt-get update
@@ -17,16 +18,20 @@ RUN pip install .
 
 FROM python:3.11-slim
 
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends \
-                curl gnupg2 qemu-utils vim
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN curl -s \
-    https://dist.eugridpma.info/distribution/igtf/current/GPG-KEY-EUGridPMA-RPM-3 \
+# hadolint disable=DL3015
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+                curl gnupg2 qemu-utils vim \
+    && curl -s \
+    https://dist.eugridpma.info/distribution/igtf/current/GPG-KEY-EUGridPMA-RPM-4 \
     | apt-key add - \
     && echo "deb https://repository.egi.eu/sw/production/cas/1/current egi-igtf core" > /etc/apt/sources.list.d/igtf.list \
     && apt-get update \
-    && apt-get install -y ca-policy-egi-core
+    && apt-get install -y ca-policy-egi-core \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -g 1999 python && \
     useradd -r -u 1999 -g python python
