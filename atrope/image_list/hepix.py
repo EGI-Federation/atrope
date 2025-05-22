@@ -40,6 +40,7 @@ CONF.register_opts(opts, group="sources")
 
 LOG = log.getLogger(__name__)
 
+
 def _set_error(func):
     def decorated(self):
         try:
@@ -47,7 +48,9 @@ def _set_error(func):
         except Exception as e:
             self.error = e
             raise
+
     return decorated
+
 
 class HepixImageList(object):
     """A Hepix Image List.
