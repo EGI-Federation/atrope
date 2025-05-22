@@ -20,16 +20,12 @@ import pprint
 
 import dateutil.parser
 import dateutil.tz
+import requests
 from oslo_config import cfg
 from oslo_log import log
-import requests
 
-from atrope import endorser
-from atrope import exception
-from atrope import image
+from atrope import endorser, exception, image, smime, utils
 from atrope.image_list import source
-from atrope import smime
-from atrope import utils
 
 opts = [
     cfg.StrOpt(
