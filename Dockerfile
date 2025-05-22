@@ -1,12 +1,16 @@
 #checkov:skip=CKV_DOCKER_2: no need for a HEALTHCHECK
 FROM python:3.11-slim as build
 
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends \
-                build-essential gcc git
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+                build-essential gcc git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /atrope
+
 RUN python -m venv /atrope/venv
+
 ENV PATH="/atrope/venv/bin:$PATH"
 
 COPY requirements.txt .
@@ -16,6 +20,7 @@ COPY . .
 
 RUN pip install --no-cache-dir .
 
+# Final image
 FROM python:3.11-slim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
