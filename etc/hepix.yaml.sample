@@ -8,7 +8,7 @@ ttycorelinux egi:
 
 vo.fedcloud.egi.eu:
     url: https://vmcaster.appdb.egi.eu/store/vo/fedcloud.egi.eu/image.list
-    enabled: true
+    enabled: true 
     endorser:
         dn: '/DC=EU/DC=EGI/C=NL/O=Hosts/O=EGI.eu/CN=appdb.egi.eu'
         ca: "/DC=ORG/DC=SEE-GRID/CN=SEE-GRID CA 2013"
@@ -17,6 +17,20 @@ vo.fedcloud.egi.eu:
         - 662b0e71-3e21-5f43-b6a1-cc2f51319fa7
     prefix: "FEDCLOUD "
     project: bb02bda767b4490a82b2f62f9347a0f5
+
+harbor:
+    enabled: true
+    type: harbor
+    api_url: "http://harbor.adress/api/v2.0"
+    project: "myproject"
+    registry_host: "harbor.adress"
+    auth_user: "user"             
+    auth_password: "password"
+    images: []
+    prefix: "HARBOR "
+    verify_ssl: false
+    page_size: 30
+    endorser:
 
 foo:
     enabled: false
