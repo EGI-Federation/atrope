@@ -192,7 +192,6 @@ class HarborImageListSource(source.BaseImageListSource):
             )
             return
 
-        artifact_tags = artifact.get("tags", [])
         matching_tag = None
         for tag_info in artifact.get("tags", []):
             tag_name = tag_info.get("name")
