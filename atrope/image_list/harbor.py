@@ -250,7 +250,6 @@ class HarborImageListSource(source.BaseImageListSource):
                     image_digest,
                 )
                 self.image_list.append(img)
-                processed_artifact_tags.add(tag_name)
                 LOG.debug(f"Added Harbor image from API: {image_ref}")
 
             except Exception as e:
