@@ -202,7 +202,9 @@ class Dispatcher(base.BaseDispatcher):
 
         if not glance_image:
             LOG.debug("Creating image '%s'.", image.identifier)
-            glance_image = self.client.image.create_image(**metadata, allow_duplicates=True)
+            glance_image = self.client.image.create_image(
+                **metadata, allow_duplicates=True
+            )
 
         if glance_image.status == "queued":
             LOG.debug("Uploading image '%s'.", image.identifier)
