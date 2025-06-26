@@ -15,9 +15,9 @@
 import json
 
 import yaml
+from keystoneauth1 import loading
 from openstack import connection
 from openstack.exceptions import ConflictException
-from keystoneauth1 import loading
 from oslo_config import cfg
 from oslo_log import log
 
@@ -231,7 +231,7 @@ class Dispatcher(base.BaseDispatcher):
                     LOG.debug("Set image '%s' as shared", image.identifier)
                     self.client.image.update_image(glance_image.id, visibility="shared")
                 try:
-                    m = self.client.image.add_member(glance_image.id, member_id=project)
+                    self.client.image.add_member(glance_image.id, member_id=project)
                 except ConflictException:
                     LOG.debug(
                         "Image '%s' already associated with VO '%s', " "tenant '%s'",
