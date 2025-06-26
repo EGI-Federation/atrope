@@ -14,10 +14,9 @@
 
 import json
 
-import glanceclient.client
-from openstack import connection
 import yaml
-from glanceclient import exc as glance_exc
+from openstack import connection
+from openstack.exceptions import ConflictException
 from keystoneauth1 import loading
 from oslo_config import cfg
 from oslo_log import log
@@ -55,6 +54,7 @@ opts = (
     loading.get_auth_common_conf_options()
     + loading.get_session_conf_options()
     + loading.get_auth_plugin_conf_options("password")
+    + loading.get_adapter_conf_options()
 )
 
 LOG = log.getLogger(__name__)
@@ -144,7 +144,6 @@ class Dispatcher(base.BaseDispatcher):
         if appliance_attrs:
             metadata["APPLIANCE_ATTRIBUTES"] = json.dumps(appliance_attrs)
 
-        # project = kwargs.pop("project")
         vos = kwargs.pop("vos")
 
         for k, v in kwargs.items():
@@ -152,12 +151,11 @@ class Dispatcher(base.BaseDispatcher):
                 raise exception.MetadataOverwriteNotSupported(key=k)
             metadata[k] = v
 
-        query = {
-            "tag": [CONF.glance.tag],
-            "appdb_id": image.identifier,
-        }
-        # TODO(aloga): what if we have several images here?
-        images = list(self.client.image.images(tag=CONF.glance.tag))
+        images = [
+            img
+            for img in self.client.image.images(tag=CONF.glance.tag)
+            if img.properties.get("appdb_id", "") == image.identifier
+        ]
         if len(images) > 1:
             images = [img.id for img in images]
             LOG.error(
@@ -179,7 +177,7 @@ class Dispatcher(base.BaseDispatcher):
                     image.identifier,
                     glance_image.id,
                 )
-                self.client.image.delete(glance_image)
+                self.client.image.delete(glance_image.id)
                 glance_image = None
 
         metadata["disk_format"], image_fd = image.convert(CONF.glance.formats)
@@ -231,10 +229,10 @@ class Dispatcher(base.BaseDispatcher):
             else:
                 if glance_image.visibility != "shared":
                     LOG.debug("Set image '%s' as shared", image.identifier)
-                    self.client.images.update(glance_image.id, visibility="shared")
+                    self.client.image.update_image(glance_image.id, visibility="shared")
                 try:
-                    self.client.image_members.create(glance_image.id, project)
-                except glance_exc.HTTPConflict:
+                    m = self.client.image.add_member(glance_image.id, member_id=project)
+                except ConflictException:
                     LOG.debug(
                         "Image '%s' already associated with VO '%s', " "tenant '%s'",
                         image.identifier,
@@ -242,8 +240,10 @@ class Dispatcher(base.BaseDispatcher):
                         project,
                     )
                 finally:
-                    client = self._get_glance_client(project_id=project)
-                    client.image_members.update(glance_image.id, project, "accepted")
+                    client = self._get_openstack_client(project_id=project)
+                    client.image.update_member(
+                        member=project, image=glance_image.id, status="accepted"
+                    )
 
                     LOG.info(
                         "Image '%s' associated with VO '%s', project '%s'",
@@ -258,12 +258,6 @@ class Dispatcher(base.BaseDispatcher):
         This method will remove images that were not set to be dispatched
         (i.e. that are not included in the list) that are present in Glance.
         """
-        query = {
-            "filters": {
-                "tag": [CONF.glance.tag],
-                "image_list": image_list.name,
-            }
-        }
         valid_images = [i.identifier for i in image_list.get_valid_subscribed_images()]
         for image in self.client.image.images(tag=CONF.glance.tag):
             if image.properties.get("image_list", "") != image_list.name:
@@ -273,7 +267,7 @@ class Dispatcher(base.BaseDispatcher):
                 LOG.warning(
                     "Glance image '%s' is not valid anymore, " "deleting it", image.id
                 )
-                self.client.image.delete(image)
+                self.client.image.delete(image.id)
 
         LOG.info("Sync terminated for image list '%s'", image_list.name)
 
