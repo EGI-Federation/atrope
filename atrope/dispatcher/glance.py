@@ -177,7 +177,7 @@ class Dispatcher(base.BaseDispatcher):
                     image.identifier,
                     glance_image.id,
                 )
-                self.client.image.delete(glance_image.id)
+                self.client.image.delete_image(glance_image.id)
                 glance_image = None
 
         metadata["disk_format"], image_fd = image.convert(CONF.glance.formats)
@@ -267,7 +267,7 @@ class Dispatcher(base.BaseDispatcher):
                 LOG.warning(
                     "Glance image '%s' is not valid anymore, " "deleting it", image.id
                 )
-                self.client.image.delete(image.id)
+                self.client.image.delete_image(image.id)
 
         LOG.info("Sync terminated for image list '%s'", image_list.name)
 
