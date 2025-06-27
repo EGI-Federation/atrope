@@ -42,7 +42,7 @@ RUN apt-get update \
 WORKDIR /atrope
 
 RUN groupadd -g 1999 python && \
-    useradd -r -u 1999 -g python python
+    useradd -r -m -u 1999 -g python python
 
 COPY --chown=python:python --from=build /atrope/venv ./venv
 
