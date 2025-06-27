@@ -21,12 +21,12 @@ opts = [
     cfg.MultiStrOpt(
         "dispatcher",
         default=["noop"],
-        help="Dispatcher to process images. Can be specified " "multiple times.",
+        help="Dispatcher to process images. Can be specified multiple times.",
     ),
     cfg.StrOpt(
         "prefix",
         default="",
-        help="If set, the image name's will be prefixed by this " "option.",
+        help="If set, the image name's will be prefixed by this option.",
     ),
 ]
 
