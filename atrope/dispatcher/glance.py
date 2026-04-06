@@ -46,10 +46,6 @@ opts = [
 ]
 CONF.register_opts(opts, group=CFG_GROUP)
 
-loading.register_auth_conf_options(CONF, CFG_GROUP)
-loading.register_session_conf_options(CONF, CFG_GROUP)
-loading.register_adapter_conf_options(CONF, CFG_GROUP)
-
 opts = (
     loading.get_auth_common_conf_options()
     + loading.get_session_conf_options()
@@ -97,15 +93,17 @@ class Dispatcher(base.BaseDispatcher):
         self.vo_map = self._read_vo_map()
 
     def _get_openstack_client(self, project_id=None):
+        cfg_grp = CFG_GROUP
         if project_id:
-            auth_plugin = loading.load_auth_from_conf_options(
-                CONF, CFG_GROUP, project_id=project_id
-            )
-        else:
-            auth_plugin = loading.load_auth_from_conf_options(CONF, CFG_GROUP)
-
+            cfg_grp = f"{CFG_GROUP}_{project_id}"
+        # hoping this is idempotent
+        loading.register_adapter_conf_options(CONF, cfg_grp)
+        loading.register_auth_conf_options(CONF, cfg_grp)
+        loading.register_session_conf_options(CONF, cfg_grp)
+        loading.register_adapter_conf_options(CONF, cfg_grp)
+        auth_plugin = loading.load_auth_from_conf_options(CONF, cfg_grp)
         session = loading.load_session_from_conf_options(
-            CONF, CFG_GROUP, auth=auth_plugin
+            CONF, cfg_grp, auth=auth_plugin
         )
         conn = connection.Connection(
             session=session,
