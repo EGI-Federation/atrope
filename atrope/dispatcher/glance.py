@@ -46,13 +46,6 @@ opts = [
 ]
 CONF.register_opts(opts, group=CFG_GROUP)
 
-opts = (
-    loading.get_auth_common_conf_options()
-    + loading.get_session_conf_options()
-    + loading.get_auth_plugin_conf_options("password")
-    + loading.get_adapter_conf_options()
-)
-
 LOG = log.getLogger(__name__)
 
 
@@ -93,9 +86,10 @@ class Dispatcher(base.BaseDispatcher):
         self.vo_map = self._read_vo_map()
 
     def _get_openstack_client(self, project_id=None):
-        cfg_grp = CFG_GROUP
-        if project_id:
-            cfg_grp = f"{CFG_GROUP}_{project_id}"
+        # load the default configuration
+        if not project_id:
+            project_id = CONF.glance.project_id
+        cfg_grp = f"{CFG_GROUP}_{project_id}"
         # hoping this is idempotent
         loading.register_adapter_conf_options(CONF, cfg_grp)
         loading.register_auth_conf_options(CONF, cfg_grp)
