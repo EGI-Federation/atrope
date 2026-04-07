@@ -49,6 +49,9 @@ opts = [
     ),
 ]
 CONF.register_opts(opts, group=CFG_GROUP)
+loading.register_auth_conf_options(CONF, CFG_GROUP)
+loading.register_session_conf_options(CONF, CFG_GROUP)
+loading.register_adapter_conf_options(CONF, CFG_GROUP)
 
 LOG = log.getLogger(__name__)
 
