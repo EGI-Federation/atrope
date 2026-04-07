@@ -43,6 +43,10 @@ opts = [
         default="atrope",
         help="Tag set on images managed by atrope.",
     ),
+    cfg.StrOpt(
+        "project_id",
+        help="Default project for glance (ops VO).",
+    ),
 ]
 CONF.register_opts(opts, group=CFG_GROUP)
 
