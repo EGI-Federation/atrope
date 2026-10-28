@@ -126,9 +126,7 @@ class Dispatcher(base.BaseDispatcher):
             if member.member_id not in current_projects:
                 self.client.image.remove_member(image_id, member.member_id)
                 LOG.info(
-                    "Image '%s' not associated with project '%s' anymore, stopped sharing",
-                    image_id,
-                    member.member_id,
+                    f"Image '{image_id}' not associated with project '{member.member_id}' anymore, stopped sharing",
                 )
         self.client.image.update_image(image_id, visibility=visibility)
 
@@ -137,9 +135,7 @@ class Dispatcher(base.BaseDispatcher):
             self.client.image.add_member(glance_image.id, member_id=project)
         except ConflictException:
             LOG.debug(
-                "Image '%s' already associated with project '%s'",
-                image.identifier,
-                project,
+                f"Image '{image.identifier}' already associated with project '{project}'",
             )
         finally:
             client = self._get_openstack_client(project_id=project)
@@ -148,9 +144,7 @@ class Dispatcher(base.BaseDispatcher):
             )
 
             LOG.info(
-                "Image '%s' associated with project '%s'",
-                image.identifier,
-                project,
+                f"Image '{image.identifier}' associated with project '{project}'",
             )
 
     def dispatch(self, image_name, image, sharing_model, **kwargs):
@@ -159,7 +153,7 @@ class Dispatcher(base.BaseDispatcher):
         If metadata is provided in the kwargs it will be associated with
         the image.
         """
-        LOG.info("Glance dispatching '%s'", image.identifier)
+        LOG.info(f"Glance dispatching '{image.identifier}'")
 
         vos = kwargs.pop("vos")
         if vos:
@@ -201,8 +195,7 @@ class Dispatcher(base.BaseDispatcher):
             images = [img.id for img in images]
             LOG.error(
                 "Found several images with same hash, please remove "
-                "them manually and run atrope again: %s",
-                images,
+                f"them manually and run atrope again: {images}",
             )
             raise exception.DuplicatedImage(images=images)
 
@@ -213,10 +206,8 @@ class Dispatcher(base.BaseDispatcher):
         else:
             if glance_image.properties.get("image_hash", "") != image.hash:
                 LOG.warning(
-                    "Image '%s' is '%s' in glance but checksums"
-                    "are different, deleting it and reuploading.",
-                    image.identifier,
-                    glance_image.id,
+                    f"Image '{image.identifier}' is '{glance_image.id}' in glance but checksums"
+                    "are different, deleting it and reuploading."
                 )
                 self.client.image.delete_image(glance_image.id)
                 glance_image = None
@@ -243,7 +234,7 @@ class Dispatcher(base.BaseDispatcher):
         )
 
         if not glance_image:
-            LOG.debug("Creating image '%s'.", image.identifier)
+            LOG.debug(f"Creating image '{image.identifier}'.", image.identifier)
             try:
                 glance_image = self.client.image.create_image(
                     **metadata, allow_duplicates=True
@@ -267,9 +258,7 @@ class Dispatcher(base.BaseDispatcher):
                     LOG.error("Insufficient permissions to update Image in Glance")
                     raise exception.GlancePermissionError(action=e)
             LOG.info(
-                "Image '%s' stored in glance as '%s'.",
-                image.identifier,
-                glance_image.id,
+                f"Image '{image.identifier}' stored in glance as '{glance_image.id}'."
             )
 
         if sharing_model == "shared":
@@ -277,25 +266,32 @@ class Dispatcher(base.BaseDispatcher):
                 project = self.vo_map.get(vo, {}).get("project_id", "")
                 if not project:
                     LOG.warning(
-                        "No project associated with VO '%s', image won't be shared.", vo
+                        f"No project associated with VO '{vo}', image won't be shared."
                     )
                     continue
                 if glance_image.owner == project:
                     LOG.info(
-                        "Image '%s' owned by dest project %s.",
-                        image.identifier,
-                        project,
+                        f"Image '{image.identifier}' owned by dest project {project}."
                     )
                 else:
                     if glance_image.visibility != "shared":
-                        LOG.debug("Set image '%s' as shared", image.identifier)
+                        LOG.debug(f"Set image '{image.identifier}' as shared")
                         sharing_model = "shared"
                         self.client.image.update_image(
                             glance_image.id, visibility="shared"
                         )
-                    self._share_image(
-                        image=image, glance_image=glance_image, project=project
-                    )
+                    try:
+                        self._share_image(
+                            image=image, glance_image=glance_image, project=project
+                        )
+                    except ForbiddenException as e:
+                        # just log it but do not take any action
+                        LOG.warning(
+                            f"Can't share image '{image.identifier}' with VO {vo}"
+                        )
+                        LOG.exception(
+                            f"Insufficient permissions to share Image in Glance: {e}"
+                        )
 
             self._clean_stale_memberships(glance_image.id, vos, sharing_model)
 
@@ -312,21 +308,20 @@ class Dispatcher(base.BaseDispatcher):
             appdb_id = image.properties.get("appdb_id", "")
             if appdb_id not in valid_images:
                 LOG.warning(
-                    "Glance image '%s' is not valid anymore, " "deleting it", image.id
+                    f"Glance image '{image.id}' is not valid anymore, deleting it"
                 )
                 try:
                     self.client.image.delete_image(image.id)
-                    LOG.info("Successfully deleted image '%s'", image.id)
+                    LOG.info(f"Successfully deleted image '{image.id}'")
+
                 except HttpException as e:
                     LOG.warning(
-                        "Failed to delete Glance image '%s': %s. "
-                        "Making it private and deactivating it instead.",
-                        image.id,
-                        e,
+                        f"Failed to delete Glance image '{image.id}': {e}. "
+                        "Making it private and deactivating it instead."
                     )
                     self.client.image.update_image(image.id, visibility="private")
                     self.client.image.deactivate_image(image.id)
-        LOG.info("Sync terminated for image list '%s'", image_list.name)
+        LOG.info(f"Sync terminated for image list '{image_list.name}'")
 
     def _upload(self, id, image_fd):
         self.client.image.upload(id, image_fd)
