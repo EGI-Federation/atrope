@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -30,6 +28,6 @@ class Dispatcher(base.BaseDispatcher):
 
         In practise I do nothing, since I am the NOOP dispatcher.
         """
-        LOG.info("Dispatching image (noop) %s" % image)
-        LOG.info("Dispatching image (noop) args: %s" % args)
-        LOG.info("Dispatching image (noop) kwargs: %s" % kwargs)
+        LOG.info(f"Dispatching image (noop) {image}")
+        LOG.info(f"Dispatching image (noop) args: {args}")
+        LOG.info(f"Dispatching image (noop) kwargs: {kwargs}")

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2014 Alvaro Lopez Garcia
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -54,7 +52,7 @@ LOG = log.getLogger(__name__)
 
 
 @six.add_metaclass(abc.ABCMeta)
-class BaseImage(object):
+class BaseImage:
     @abc.abstractmethod
     def __init__(self, image_info):
         self.uri = None
@@ -71,7 +69,6 @@ class BaseImage(object):
 
         :param location:
         """
-        pass
 
     def download(self, dest):
         """Download the image
@@ -157,7 +154,9 @@ class BaseImage(object):
         LOG.info("Image '%s' present in '%s', checksum OK", self.identifier, location)
         self.verified = True
 
-    def convert(self, dest_formats=[], mode="rb"):
+    def convert(self, dest_formats=None, mode="rb"):
+        if dest_formats is None:
+            dest_formats = []
         fmt, disk = self.get_disk()
         if (not dest_formats) or (fmt.lower() in dest_formats):
             LOG.debug("No need to convert initial image format '%s'", fmt)
@@ -167,7 +166,7 @@ class BaseImage(object):
         LOG.debug(
             "Converting image '%s' (%s) into '%s'", self.identifier, fmt, dest_fmt
         )
-        converted_location = "%s.%s" % (self.location, dest_fmt)
+        converted_location = f"{self.location}.{dest_fmt}"
         if not self.verified or not os.path.exists(converted_location):
             with tempfile.NamedTemporaryFile(mode="w+b") as f:
                 block = disk.read(8192)
@@ -226,7 +225,7 @@ class HepixImage(BaseImage):
     required_fields = field_map.keys()
 
     def __init__(self, image_info):
-        super(HepixImage, self).__init__(image_info)
+        super().__init__(image_info)
 
         image_dict = image_info.get("hv:image", {})
 
@@ -237,7 +236,7 @@ class HepixImage(BaseImage):
         for i in self.required_fields:
             value = image_dict.get(i, None)
             if value is None:
-                reason = "Invalid image definition, missing '%s'" % i
+                reason = f"Invalid image definition, missing '{i}'"
                 raise exception.InvalidImageList(reason=reason)
 
             attr = self.field_map.get(i)

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2014 Alvaro Lopez Garcia
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -34,7 +32,7 @@ CONF = cfg.CONF
 CONF.register_opts(opts)
 
 
-class Signer(object):
+class Signer:
     def __init__(self, dn, ca):
         aux = [(i.decode("utf-8"), j.decode("utf-8")) for i, j in dn.get_components()]
         aux = "/".join(["=".join(i) for i in aux])
@@ -47,7 +45,7 @@ class Signer(object):
         return f"<Signer dn:{self.dn}, ca:{self.ca}>"
 
 
-class SMIMEVerifier(object):
+class SMIMEVerifier:
     def verify(self, msg):
         signer, verified_data = self._get_signer_cert_and_verify(msg)
         if not signer:

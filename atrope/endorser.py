@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2014 Alvaro Lopez Garcia
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -17,7 +15,7 @@
 from atrope import exception
 
 
-class Endorser(object):
+class Endorser:
     required_fields = (
         "dc:creator",
         "hv:ca",
@@ -30,7 +28,7 @@ class Endorser(object):
         meta = meta.get("hv:x509")
 
         keys = meta.keys()
-        if not all([i in keys for i in self.required_fields]):
+        if not all(i in keys for i in self.required_fields):
             reason = "Invalid image list, missing mandatory fields"
             raise exception.InvalidImageList(reason=reason)
 
@@ -40,4 +38,4 @@ class Endorser(object):
         self.email = meta["hv:email"]
 
     def __str__(self):
-        return "<Endorser dn:%s, ca:%s>" % (self.dn, self.ca)
+        return f"<Endorser dn:{self.dn}, ca:{self.ca}>"

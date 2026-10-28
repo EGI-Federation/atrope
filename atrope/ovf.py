@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2015 Spanish National Research Council
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -44,8 +42,8 @@ def get_disk_name(ovf):
     root = etree.fromstring(ovf)
     ovf_ns = root.nsmap["ovf"]
 
-    id_attr = "{%s}id" % ovf_ns
-    href_attr = "{%s}href" % ovf_ns
+    id_attr = f"{{{ovf_ns}}}id"
+    href_attr = f"{{{ovf_ns}}}href"
     files = {
         f.get(id_attr): f.get(href_attr)
         for f in root.findall("ovf:References/ovf:File", root.nsmap)
@@ -54,8 +52,8 @@ def get_disk_name(ovf):
     # we do not care about more than one disk
     disk = root.find("ovf:DiskSection/ovf:Disk", root.nsmap)
     if disk is not None:
-        format_attr = "{%s}format" % ovf_ns
-        fileref_attr = "{%s}fileRef" % ovf_ns
+        format_attr = f"{{{ovf_ns}}}format"
+        fileref_attr = f"{{{ovf_ns}}}fileRef"
         ovf_format = disk.get(format_attr)
         if not ovf_format:
             raise Exception("Expecting some format!")

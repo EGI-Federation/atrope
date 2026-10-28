@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2014 Alvaro Lopez Garcia
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -36,7 +34,7 @@ def _set_error(func):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class BaseImageListSource(object):
+class BaseImageListSource:
     """An image list."""
 
     def __init__(
@@ -44,12 +42,16 @@ class BaseImageListSource(object):
         name,
         url="",
         enabled=True,
-        subscribed_images=[],
+        subscribed_images=None,
         prefix="",
         project="",
-        vos=[],
+        vos=None,
         **kwargs,
     ):
+        if vos is None:
+            vos = []
+        if subscribed_images is None:
+            subscribed_images = []
         self.name = name
         self.url = url
         self.enabled = enabled
@@ -61,7 +63,7 @@ class BaseImageListSource(object):
         self.project = project
 
     def __repr__(self):
-        return "<%s: %s>" % (self.__class__.__name__, self.name)
+        return f"<{self.__class__.__name__}: {self.name}>"
 
     @abc.abstractmethod
     def fetch(self):

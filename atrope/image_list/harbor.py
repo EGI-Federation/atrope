@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # (Include Apache License Header Here)
 
 import re
@@ -29,7 +27,7 @@ class HarborImageListSource(source.BaseImageListSource):
         api_url="",  # https://harbor.example.com/api/v2.0
         registry_host="",  # harbor.example.com
         enabled=True,
-        subscribed_images=[],
+        subscribed_images=None,
         prefix="",
         project="",
         tag_pattern=None,
@@ -40,6 +38,8 @@ class HarborImageListSource(source.BaseImageListSource):
         sharing_model="private",
         **kwargs,
     ):
+        if subscribed_images is None:
+            subscribed_images = []
         super().__init__(
             name,
             url=f"{api_url}/projects/{project}/repositories",

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -38,10 +36,10 @@ LOG = log.getLogger(__name__)
 DISPATCHER_NAMESPACE = "atrope.dispatcher"
 
 
-class DispatcherManager(object):
+class DispatcherManager:
     def __init__(self):
         self.dispatchers = []
-        cls_ = "%s.%s.Dispatcher" % (DISPATCHER_NAMESPACE, CONF.dispatchers.dispatcher)
+        cls_ = f"{DISPATCHER_NAMESPACE}.{CONF.dispatchers.dispatcher}.Dispatcher"
         self.dispatchers.append(importutils.import_class(cls_)())
 
     def sync(self, image_list, **kwargs):
@@ -74,7 +72,7 @@ class DispatcherManager(object):
         :param **kwargs: extra metadata to be added to the image.
         """
 
-        LOG.info("Preparing to dispatch list '%s'" % image_list.name)
+        LOG.info(f"Preparing to dispatch list '{image_list.name}'")
 
         kwargs.setdefault("image_list", image_list.name)
         kwargs.setdefault("project", image_list.project)
@@ -109,6 +107,6 @@ class DispatcherManager(object):
             except Exception as e:
                 LOG.exception(
                     "An exception has occured when dispatching "
-                    "image %s" % image.identifier
+                    f"image {image.identifier}"
                 )
                 LOG.exception(e)

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2014 Alvaro Lopez Garcia
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -35,7 +33,7 @@ CONF.register_opts(opts, group="cache")
 LOG = log.getLogger(__name__)
 
 
-class CacheManager(object):
+class CacheManager:
     def __init__(self):
         self.path = pathlib.Path(CONF.cache.path)
         utils.makedirs(self.path)  # FIXME
@@ -64,7 +62,6 @@ class CacheManager(object):
                     ):
                         pass
                     else:
-                        pass
                         self._valid_paths.append(pathlib.Path(img.location))
         else:
             LOG.info(

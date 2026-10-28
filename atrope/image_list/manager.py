@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2014 Alvaro Lopez Garcia
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -40,7 +38,7 @@ LOG = log.getLogger(__name__)
 
 
 @six.add_metaclass(abc.ABCMeta)
-class BaseImageListManager(object):
+class BaseImageListManager:
     def __init__(self, dispatcher=None):
         self.cache_manager = cache.CacheManager()
         self._dispatcher = None
@@ -118,7 +116,7 @@ class BaseImageListManager(object):
 
 class YamlImageListManager(BaseImageListManager):
     def __init__(self):
-        super(YamlImageListManager, self).__init__()
+        super().__init__()
 
     def _load_sources(self):
         """Load sources from YAML file."""
@@ -126,7 +124,7 @@ class YamlImageListManager(BaseImageListManager):
         try:
             with open(CONF.sources.image_sources, "rb") as f:
                 image_lists = yaml.safe_load(f) or {}
-        except IOError as e:
+        except OSError as e:
             raise exception.CannotOpenFile(
                 file=CONF.sources.image_sources, errno=e.errno
             )
