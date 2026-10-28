@@ -49,3 +49,10 @@ packages = ["atrope"]
     "etc/sources.yaml.sample",
     "etc/voms.json.sample"
 ]
+
+[dependency-groups]
+dev = [
+    "fixtures>=4.0.1",
+    "pytest>=7.0.1",
+    "testtools>=2.6.0",
+]
