@@ -90,7 +90,7 @@ class HepixImageListSource(source.BaseImageListSource):
         prefix="",
         project="",
         file_path=None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             name,

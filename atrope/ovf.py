@@ -59,7 +59,7 @@ def get_disk_name(ovf):
         ovf_format = disk.get(format_attr)
         if not ovf_format:
             raise Exception("Expecting some format!")
-        (format_url, _) = parse.urldefrag(ovf_format)
+        format_url, _ = parse.urldefrag(ovf_format)
         try:
             disk_format = SPECS[format_url]
         except KeyError:
