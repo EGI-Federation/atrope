@@ -126,7 +126,7 @@ class Dispatcher(base.BaseDispatcher):
             if member.member_id not in current_projects:
                 self.client.image.remove_member(image_id, member.member_id)
                 LOG.info(
-                    f"Image '{image.id}' not associated with project '{member.member_id}' anymore, stopped sharing",
+                    f"Image '{image_id}' not associated with project '{member.member_id}' anymore, stopped sharing",
                 )
         self.client.image.update_image(image_id, visibility=visibility)
 
