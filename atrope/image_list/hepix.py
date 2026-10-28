@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2014 Alvaro Lopez Garcia
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -29,7 +27,7 @@ from atrope.image_list import source
 LOG = log.getLogger(__name__)
 
 
-class HepixImageList(object):
+class HepixImageList:
     """A Hepix Image List.
 
     Objects of this class will hold the representation of the
@@ -52,7 +50,7 @@ class HepixImageList(object):
     def __init__(self, meta):
         meta = meta.get("hv:imagelist", {})
         keys = meta.keys()
-        if not all([i in keys for i in self.required_fields]):
+        if not all(i in keys for i in self.required_fields):
             reason = "Invalid image list, missing mandatory fields"
             raise exception.InvalidImageList(reason=reason)
 
@@ -86,12 +84,14 @@ class HepixImageListSource(source.BaseImageListSource):
         name,
         url="",
         enabled=True,
-        subscribed_images=[],
+        subscribed_images=None,
         prefix="",
         project="",
         file_path=None,
-        **kwargs
+        **kwargs,
     ):
+        if subscribed_images is None:
+            subscribed_images = []
         super().__init__(
             name,
             url=url,
@@ -147,7 +147,7 @@ class HepixImageListSource(source.BaseImageListSource):
             try:
                 with open(self.file_path, "rb") as f:
                     return f.read()
-            except IOError as e:
+            except OSError as e:
                 raise exception.CannotOpenFile(file=self.file_path, errno=e.errno)
         elif self.url:
             if self.token:
@@ -188,21 +188,20 @@ class HepixImageListSource(source.BaseImageListSource):
         list_endorser = self.image_list.endorser
         msg = None
         if self.signer.dn != list_endorser.dn or self.signer.ca != list_endorser.ca:
-            msg = "List '%s' signer != list endorser " "'%s' != '%s'" % (
-                self.name,
-                self.signer,
-                list_endorser,
+            msg = (
+                f"List '{self.name}' signer != list endorser "
+                f"'{self.signer}' != '{list_endorser}'"
             )
         elif self.endorser["dn"] != list_endorser.dn:
             msg = (
-                "List '%s' endorser is not trusted, DN mismatch "
-                "'%s' != '%s'" % self.name,
+                "List '{}' endorser is not trusted, DN mismatch "
+                "'{}' != '{}'".format(*self.name),
                 self.endorser["dn"],
                 list_endorser.dn,
             )
         elif self.endorser["ca"] != list_endorser.ca:
             msg = (
-                "List '%s' endorser CA is invalid '%s' != '%s'" % self.name,
+                "List '{}' endorser CA is invalid '{}' != '{}'".format(*self.name),
                 self.endorser["ca"],
                 list_endorser.ca,
             )

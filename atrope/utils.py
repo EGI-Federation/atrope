@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2014 Alvaro Lopez Garcia
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -22,7 +20,6 @@ import shutil
 
 import prettytable
 import six
-from six.moves import input
 
 
 def print_list(objs, fields, sortby=None):
@@ -121,7 +118,7 @@ def yn_question(msg="Enabled", default=True):
     else:
         default = "n"
 
-    yn = input("%s (y/n) [%s]: " % (msg, default)).lower() or default
+    yn = input(f"{msg} (y/n) [{default}]: ").lower() or default
     if yn == "y":
         return True
     elif yn == "n":

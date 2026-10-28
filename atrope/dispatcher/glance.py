@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
 # a copy of the License at
@@ -116,7 +114,7 @@ class Dispatcher(base.BaseDispatcher):
         try:
             with open(CONF.glance.vo_map, "rb") as f:
                 vo_map = yaml.safe_load(f) or {}
-        except IOError as e:
+        except OSError as e:
             raise exception.CannotOpenFile(file=CONF.glance.vo_map, errno=e.errno)
         return vo_map
 
@@ -185,7 +183,7 @@ class Dispatcher(base.BaseDispatcher):
             if value:
                 metadata[prop] = value
 
-        appliance_attrs = getattr(image, "appliance_attributes")
+        appliance_attrs = image.appliance_attributes
         if appliance_attrs:
             metadata["APPLIANCE_ATTRIBUTES"] = json.dumps(appliance_attrs)
 

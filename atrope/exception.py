@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2014 Alvaro Lopez Garcia
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -35,10 +33,10 @@ class AtropeException(Exception):
                 # log the issue and the kwargs
                 LOG.exception("Exception in string format operation")
                 for name, value in kwargs.items():
-                    LOG.error("%s: %s" % (name, value))
+                    LOG.error(f"{name}: {value}")
                 message = self.msg_fmt
 
-        super(AtropeException, self).__init__(message)
+        super().__init__(message)
 
 
 class CannotOpenFile(AtropeException):
@@ -46,7 +44,7 @@ class CannotOpenFile(AtropeException):
 
     def __init__(self, message=None, errno=0, **kwargs):
         kwargs["reason"] = os.strerror(errno)
-        super(CannotOpenFile, self).__init__(message=message, **kwargs)
+        super().__init__(message=message, **kwargs)
 
 
 class SMIMEValidationError(AtropeException):

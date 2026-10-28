@@ -1,0 +1,58 @@
+[project]
+name = "atrope"
+version = "2.2.0"
+description = "Tools to deal with the configuration of the catch-all components"
+readme = "README.md"
+authors = [
+    { name = "Enol Fernández", email = "enol.fernandez@egi.eu" },
+    { name = "Alvaro López García", email = "aloga@ifca.unican.es" },
+
+]
+license = "Apache-2.0"
+classifiers = [
+   "Intended Audience :: Information Technology",
+   "Intended Audience :: System Administrators",
+   "Operating System :: POSIX :: Linux",
+   "Programming Language :: Python",
+   "Programming Language :: Python :: 3",
+]
+requires-python = ">=3.6"
+dependencies = [
+    "docker>=5.0.3",
+    "keystoneauth1>=5.1.3",
+    "lxml>=4.6.2",
+    "openstacksdk>=1.5.1",
+    "oras>=0.2.43",
+    "oslo-config>=2.3.0",
+    "prettytable>=2.5.0",
+    "pyopenssl>=23.2.0",
+    "python-dateutil>=3.0.0",
+    "pyyaml>=6.0.1",
+    "requests>=2.27.1",
+    "six>=1.17.0",
+]
+
+[project.scripts]
+atrope = "atrope.cmd.cli:main"
+
+[build-system]
+requires = ["setuptools>=84.2.1"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["atrope"]
+
+[tool.setuptools.data-files]
+"etc/atrope" = [
+    "etc/atrope-config-generator.conf",
+    "etc/atrope.conf.sample",
+    "etc/sources.yaml.sample",
+    "etc/voms.json.sample"
+]
+
+[dependency-groups]
+dev = [
+    "fixtures>=4.0.1",
+    "pytest>=7.0.1",
+    "testtools>=2.6.0",
+]

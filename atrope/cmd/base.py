@@ -19,11 +19,11 @@ def name(name):
     return _decorator
 
 
-class Commands(object):
+class Commands:
     pass
 
 
-class BaseCommand(object):
+class BaseCommand:
     def __init__(self, parser, name, cmd_help):
         self.name = name
         self.cmd_help = cmd_help

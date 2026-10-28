@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2014 Alvaro Lopez Garcia
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -14,7 +12,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from __future__ import print_function
 
 import sys
 
@@ -47,13 +44,13 @@ CONF.register_cli_opt(command_opt)
 LOG = log.getLogger(__name__)
 
 
-class CommandManager(object):
+class CommandManager:
     def execute(self):
         try:
             LOG.info("Atrope session starts >>>>>>>>>>")
             CONF.command.func()
         except exception.AtropeException as e:
-            print("ERROR: %s" % e, file=sys.stderr)
+            print(f"ERROR: {e}", file=sys.stderr)
             sys.exit(1)
         except KeyboardInterrupt:
             print("\nExiting...", file=sys.stderr)

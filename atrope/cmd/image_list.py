@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2021 Alvaro Lopez Garcia
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -25,7 +23,7 @@ CONF = cfg.CONF
 
 class BaseImageListCommand(base.BaseCommand):
     def __init__(self, *args, **kwargs):
-        super(BaseImageListCommand, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._manager = None
 
     @property
@@ -39,7 +37,7 @@ class CommandImageListIndex(BaseImageListCommand):
     def __init__(
         self, parser, name="index", cmd_help="Show the configured image lists."
     ):
-        super(CommandImageListIndex, self).__init__(parser, name, cmd_help)
+        super().__init__(parser, name, cmd_help)
 
     def run(self):
         fields = ["name", "url", "enabled", "endorser"]
@@ -62,7 +60,7 @@ class CommandImageListFetch(BaseImageListCommand):
         name="verify",
         cmd_help="Fetch and verify the configured image lists.",
     ):
-        super(CommandImageListFetch, self).__init__(parser, name, cmd_help)
+        super().__init__(parser, name, cmd_help)
 
         self.parser.add_argument(
             "-c",
@@ -96,7 +94,7 @@ class CommandImageListCache(BaseImageListCommand):
         name="cache",
         cmd_help="Download images from configured image lists.",
     ):
-        super(CommandImageListCache, self).__init__(parser, name, cmd_help)
+        super().__init__(parser, name, cmd_help)
 
     def run(self):
         self.manager.cache()
@@ -110,7 +108,7 @@ class CommandDispatch(BaseImageListCommand):
         cmd_help="Download images from configured image lists "
         "and sync them to the available dispatchers.",
     ):
-        super(CommandDispatch, self).__init__(parser, name, cmd_help)
+        super().__init__(parser, name, cmd_help)
 
     def run(self):
         self.manager.sync()

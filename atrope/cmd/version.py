@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2021 Alvaro Lopez Garcia
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -20,7 +18,7 @@ from atrope.cmd import base
 
 class CommandVersion(base.BaseCommand):
     def __init__(self, parser, name="version", cmd_help="Show verison and exit."):
-        super(CommandVersion, self).__init__(parser, name, cmd_help)
+        super().__init__(parser, name, cmd_help)
 
     def run(self):
         print(atrope.__version__)
