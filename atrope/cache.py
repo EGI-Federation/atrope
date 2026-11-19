@@ -47,6 +47,10 @@ class CacheManager:
     belonging to a valid image (both the downloaded image and any
     image already converted from it) are kept, so converted images do
     not need to be generated again on every sync.
+
+    Lists that are disabled are not cleaned at all: as they may be
+    enabled again, their images are kept in the cache so they do not
+    need to be downloaded again.
     """
 
     def __init__(self):
@@ -56,17 +60,21 @@ class CacheManager:
 
     def _download_list(self, lst):
         LOG.info(f"Syncing list with ID '{lst.name}'")
+        basedir = self.path / lst.name
+
         if not lst.enabled:
+            # The list may be enabled again, so keep its images (and
+            # the images converted from them) in the cache to avoid
+            # downloading them again.
             LOG.info(
-                f"List '{lst.name}' is disabled, images will be " "marked for removal"
+                f"List '{lst.name}' is disabled, keeping downloaded images in cache"
             )
+            self._mark_valid_tree(basedir)
             return
 
         LOG.info(
-            f"List '{lst.name}' is enabled, checking if downloaded "
-            "images are valid"
+            f"List '{lst.name}' is enabled, checking if downloaded " "images are valid"
         )
-        basedir = self.path / lst.name
         imgdir = basedir / "images"
         if not (lst.trusted and lst.verified and not lst.expired):
             return
@@ -84,6 +92,17 @@ class CacheManager:
                 pass
             else:
                 self._mark_image_valid(img)
+
+    def _mark_valid_tree(self, base):
+        """Mark every file and directory under 'base' as valid.
+
+        Used for disabled lists, whose contents are kept in the cache
+        as the list may be enabled again.
+
+        :param base: directory to keep in the cache.
+        """
+        self._valid_paths.add(base)
+        self._valid_paths.update(base.glob("**/*"))
 
     def _mark_image_valid(self, image):
         """Mark all the files of an image as valid.

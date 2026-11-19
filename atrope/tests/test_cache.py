@@ -118,7 +118,20 @@ class CacheManagerTestCase(base.TestCase):
         self.assertFalse((imgdir / "image").exists())
         self.assertFalse(converted.exists())
 
-    def test_disabled_list_removes_images(self):
+    def test_disabled_list_keeps_images(self):
+        self._sync([FakeImage("image")])
+
+        imgdir = self._images_dir()
+        converted = imgdir / "image.raw"
+        converted.write_bytes(b"converted contents")
+
+        # the list is disabled: images are kept in the cache so they
+        # do not need to be downloaded again when it is enabled
+        self._sync([FakeImage("image")], enabled=False)
+        self.assertTrue((imgdir / "image").exists())
+        self.assertTrue(converted.exists())
+
+    def test_disabled_list_images_are_reused_when_enabled(self):
         self._sync([FakeImage("image")])
 
         imgdir = self._images_dir()
@@ -126,7 +139,31 @@ class CacheManagerTestCase(base.TestCase):
         converted.write_bytes(b"converted contents")
 
         self._sync([FakeImage("image")], enabled=False)
-        self.assertFalse(imgdir.exists())
+        # the list is enabled again, images are still there
+        manager = self._sync([FakeImage("image")])
+        self.assertTrue((imgdir / "image").exists())
+        self.assertTrue(converted.exists())
+        # and the list dir is marked as valid
+        self.assertIn(pathlib.Path(self.cache_dir) / "list", manager._valid_paths)
+
+    def test_sync_keeps_disabled_lists(self):
+        self._sync([FakeImage("image")], name="list")
+        self._sync([FakeImage("other")], name="other")
+
+        imgdir = self._images_dir(name="list")
+        converted = imgdir / "image.raw"
+        converted.write_bytes(b"converted contents")
+
+        manager = cache.CacheManager()
+        manager.sync(
+            {
+                "list": FakeList("list", [], enabled=False),
+                "other": FakeList("other", [FakeImage("other")]),
+            }
+        )
+        self.assertTrue((imgdir / "image").exists())
+        self.assertTrue(converted.exists())
+        self.assertTrue((self._images_dir(name="other") / "other").exists())
 
     def test_untrusted_list_removes_images(self):
         self._sync([FakeImage("image")])
