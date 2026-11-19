@@ -99,10 +99,45 @@ class BaseImage:
                     self.identifier,
                     location,
                 )
+                # Images converted from the invalid one are not valid
+                # either, remove them so they are generated again from
+                # the new image contents.
+                self.remove_converted(location)
                 self.download_and_verify(location)
 
         self.location = location
-        self.locations = [location]
+        # Keep track of the images converted from this one (e.g. a
+        # qcow2 image converted into raw) so they are not removed from
+        # the cache and do not need to be generated again.
+        self.locations = [location] + self.get_converted_locations(location)
+
+    def get_converted_locations(self, location=None):
+        """Return the locations of the images converted from this one.
+
+        Converted images are stored next to the original image, named
+        after it and the destination format (e.g. 'image.qcow2.raw').
+
+        :param location: location of the original image, defaults to
+            the location of this image.
+        """
+        location = location or self.location
+        if location is None:
+            return []
+
+        dirname, filename = os.path.split(location)
+        try:
+            files = os.listdir(dirname)
+        except OSError:
+            return []
+
+        prefix = filename + "."
+        return [os.path.join(dirname, f) for f in files if f.startswith(prefix)]
+
+    def remove_converted(self, location=None):
+        """Remove the images converted from this one."""
+        for converted in self.get_converted_locations(location):
+            LOG.info("Removing converted image '%s'", converted)
+            utils.rm(converted)
 
     def get_file(self, mode="rb"):
         """Return a File object containing the downloaded file."""
@@ -194,7 +229,8 @@ class BaseImage:
                     )
         else:
             LOG.info("Found converted image for '%s' -  noop", self.identifier)
-        self.locations.append(converted_location)
+        if converted_location not in self.locations:
+            self.locations.append(converted_location)
         LOG.info(
             "Image '%s' converted and stored at %s", self.identifier, converted_location
         )
