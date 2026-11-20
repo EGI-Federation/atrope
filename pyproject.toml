@@ -53,6 +53,7 @@ include = ["atrope*"]
 
 [dependency-groups]
 dev = [
+    "black>=25.1.0",
     "fixtures>=4.0.1",
     "pytest>=7.0.1",
     "testtools>=2.6.0",
